@@ -4,7 +4,6 @@ An ExcelScript-powered tool for dynamically building and managing hierarchical B
 ---
 
 ✨ Features
-
   - Insert Child Item Row
   - Dynamically generates and inserts a new child row under the selected item.
   - Maintains item code hierarchy (e.g., A-1 → A-1-1, A-1-2, etc.).
@@ -15,6 +14,7 @@ An ExcelScript-powered tool for dynamically building and managing hierarchical B
   - Detects parent-child relationships to roll up costs using SUM() formulas.
   - Applies intelligent fallbacks and placeholders for manual entries.
 
+
 📁 File Structure (Key Functions)
 
   Function	                                        Purpose
@@ -24,6 +24,7 @@ An ExcelScript-powered tool for dynamically building and managing hierarchical B
   computeNewChildItemCodeAndInsertionRow()	        Calculates next child code and insertion point.
   formatRowByHierarchyLevel()                       Applies visual formatting and cell merging based on depth.
 
+
 🔢 Hierarchy Levels
 
   Level	    Example Code	    Formatting             Description
@@ -31,6 +32,7 @@ An ExcelScript-powered tool for dynamically building and managing hierarchical B
   1	        A-1	              Parent Item            (Gray Fill)
   2	        A-1-1	            Activity               (White Fill)
   3	        A-1-1-1	          Sub-Activity           (Blue Font)
+
 
 📌 Usage
 Trigger the Script
@@ -42,6 +44,7 @@ Auto-Recalculate Formulas
 
 Edit Safely
   Only modify columns B, C–F, G–I manually. Column J (Cost) is auto-derived and should not be edited directly.
+
 
 ⚠️ Notes & Assumptions
   - Assumes item codes in Column B follow a hyphenated format (e.g., A, A-1, A-1-2)
