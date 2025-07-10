@@ -12,7 +12,7 @@ ExcelScript tool for dynamically building and managing hierarchical Bills of Qua
   - Auto-Update Activity Formulas
   - Recalculates quantities, units, rates, and cost formulas for the entire activity table.
   - Detects parent-child relationships to roll up costs using SUM() formulas.
-  - Applies intelligent fallbacks and placeholders for manual entries.
+  - Applies fallbacks and placeholders for manual entries.
 
 
 📁 File Structure (Key Functions)
