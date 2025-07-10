@@ -1,5 +1,5 @@
 # excelscript-bill-of-quantities-builder
-An ExcelScript-powered tool for dynamically building and managing hierarchical Bills of Quantities (BQ) in Excel—ideal for civil and construction projects. It enables structured parent-child item code insertion (e.g., A-1-2), applies consistent formatting, and auto-generates formulas for quantity, unit, rate, and cost, streamlining activity table organization and updates.
+ExcelScript tool for dynamically building and managing hierarchical Bills of Quantities (BQ) in Excel for civil and construction projects. Enables parent-child item code insertion (e.g., A-1-2), applies consistent formatting, and auto-generates formulas for quantity, unit, rate, and cost, to streamline table organization.
 
 ---
 
