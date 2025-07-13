@@ -58,6 +58,9 @@ function insertChildItemRow(workbook: ExcelScript.Workbook): void {
   console.log(`✅ Inserted new child item at row ${newChildInsertionRow} with hierarchy level ${newChildHierarchyLevel}`);
 }
 
+
+
+
 /**
  * Updates the activity table in the worksheet by processing hierarchical item codes
  * and applying quantity, unit, rate, and cost formulas accordingly.
@@ -73,118 +76,123 @@ function insertChildItemRow(workbook: ExcelScript.Workbook): void {
  * - Writes updated values/formulas to columns G to J.
  */
 function updateActivityRowFormulas(
-  sheet: ExcelScript.Worksheet,
-  tableHeaderRow: number,
+    sheet: ExcelScript.Worksheet,
+    tableHeaderRow: number,
 ) {
 
-  // Get bottom grand totals row index
-  const bottomTotalsRow = sheet.getRange(`B${tableHeaderRow}`).getRangeEdge(ExcelScript.KeyboardDirection.down).getRowIndex() + 1;
+    // Get bottom grand totals row index
+    const bottomTotalsRow = sheet.getRange(`B${tableHeaderRow}`).getRangeEdge(ExcelScript.KeyboardDirection.down).getRowIndex() + 1;
 
-  // Define top and bottom data row bounds
-  const dataTopRow = tableHeaderRow + 1;
-  const dataBottomRow = bottomTotalsRow - 1;
+    // Define top and bottom data row bounds
+    const dataTopRow = tableHeaderRow + 1;
+    const dataBottomRow = bottomTotalsRow - 1;
 
-  // Exit early if no activity rows exist
-  if (dataBottomRow === tableHeaderRow) {
-    console.log("The table is empty!")
-    return [];
-  }
-
-  // Extract data range from columns B to J
-  const tableData2D = sheet.getRange(`B${dataTopRow}:J${dataBottomRow}`).getValues();
-
-  // Map each row into an activity object
-  const activityObjectsArray: {
-    rowNumber: number,
-    itemCode: string,
-    quantity: (number | string),
-    unit: string,
-    rate: (number | string),
-    cost: string,
-    hierarchyLevel: number,
-    hasChild: boolean,
-  }[] = tableData2D.map((activity, i) => {
-
-    const itemCode = activity[0] as string;
-    const quantity = activity[5] as (number | string);
-    const unit = activity[6] as string;
-    const rate = activity[7] as (number | string);
-    const cost = activity[8] as string;
-
-    const rowNumber = dataTopRow + i as number;
-    const hierarchyLevel = (itemCode.match(/-/g) || []).length as number;
-
-    return {
-      rowNumber,
-      itemCode,
-      quantity,
-      unit,
-      rate,
-      cost,
-      hierarchyLevel,
-      hasChild: false
-    };
-  });
-
-  // Check and mark each activity that has at least one child
-  for (let i = 0; i < activityObjectsArray.length - 1; i++) {
-    const current = activityObjectsArray[i];
-    const next = activityObjectsArray[i + 1];
-
-    if (
-      next.itemCode.startsWith(current.itemCode + "-") &&
-      next.hierarchyLevel === current.hierarchyLevel + 1
-    ) {
-      current.hasChild = true;
+    // Exit early if no activity rows exist
+    if (dataBottomRow === tableHeaderRow) {
+        console.log("The table is empty!")
+        return [];
     }
-  }
 
-  // Update each activity’s fields based on whether it has children
-  activityObjectsArray.forEach((activity) => {
+    // Extract data range from columns B to J
+    const tableData2D = sheet.getRange(`B${dataTopRow}:J${dataBottomRow}`).getFormulas();
 
-    if (activity.hasChild) {
-      // Aggregate formula logic for parent items
-      activity.quantity = 1;
-      activity.unit = "LS";
+    // Map each row into an activity object
+    const activityObjectsArray: {
+        rowNumber: number,
+        itemCode: string,
+        quantity: (number | string),
+        unit: string,
+        rate: (number | string),
+        cost: string,
+        hierarchyLevel: number,
+        hasChild: boolean,
+    }[] = tableData2D.map((activity, i) => {
 
-      let rateAndCostFormula = "=SUM(";
+        // Formulas from existing table
+        const itemCode = activity[0] as string;
+        const quantity = activity[5] as (number | string);
+        const unit = activity[6] as string;
+        const rate = activity[7] as (number | string);
+        const cost = activity[8] as string;
 
-      activityObjectsArray.forEach(item => {
+        // Formulas not from table
+        const rowNumber = dataTopRow + i as number;
+        const hierarchyLevel = (itemCode.match(/-/g) || []).length as number;
+
+        return {
+            rowNumber,
+            itemCode,
+            quantity,
+            unit,
+            rate,
+            cost,
+            hierarchyLevel,
+            hasChild: false
+        };
+    });
+
+    // Check and mark each activity that has at least one child
+    for (let i = 0; i < activityObjectsArray.length - 1; i++) {
+        const current = activityObjectsArray[i];
+        const next = activityObjectsArray[i + 1];
+
         if (
-          item.itemCode.startsWith(activity.itemCode + "-") &&
-          item.hierarchyLevel === activity.hierarchyLevel + 1
+            next.itemCode.startsWith(current.itemCode + "-") &&
+            next.hierarchyLevel === current.hierarchyLevel + 1
         ) {
-          rateAndCostFormula += `J${item.rowNumber},`;
+            current.hasChild = true;
         }
-      });
-
-      rateAndCostFormula = rateAndCostFormula.slice(0, -1) + ")";
-
-      activity.rate = rateAndCostFormula;
-      activity.cost = rateAndCostFormula;
-
-    } else {
-      // Assign placeholders or cost formula for leaf items
-      activity.quantity = activity.quantity === "" ? "[qty]" : activity.quantity;
-      activity.unit = activity.unit === "" ? "[unit]" : activity.unit;
-      activity.rate = (activity.rate === "" || activity.rate === "#REF!") ? "[rate]" : activity.rate;
-
-      activity.cost = `=IFERROR(IF(G${activity.rowNumber}="-", "-", G${activity.rowNumber}*I${activity.rowNumber}), "[pending values]")`;
     }
-  });
+
+    // Update each activity’s fields based on whether it has children
+    activityObjectsArray.forEach((activity) => {
+
+        if (activity.hasChild) {
+
+            // Aggregate formula logic for parent items
+            activity.quantity = 1;
+            activity.unit = "LS";
+
+            let costFormula = "=SUM(";
+
+            activityObjectsArray.forEach(item => {
+                if (
+                    item.itemCode.startsWith(activity.itemCode + "-") &&
+                    item.hierarchyLevel === activity.hierarchyLevel + 1
+                ) {
+                    costFormula += `J${item.rowNumber},`;
+                }
+            });
+
+            costFormula = costFormula.slice(0, -1) + ")";
+
+            activity.rate = "";
+            activity.cost = costFormula;
+
+        } else {
+
+            // Assign placeholders or cost formula for leaf items
+            activity.quantity = activity.quantity === "" ? "[qty]" : activity.quantity;
+            activity.unit = activity.unit === "" ? "[unit]" : activity.unit;
+            activity.rate = (activity.rate === "" || activity.rate === "#REF!") ? "[rate]" : activity.rate;
+
+            activity.cost = `=IFERROR(IF(G${activity.rowNumber}="-", "-", G${activity.rowNumber}*I${activity.rowNumber}), "[pending values]")`;
+        }
+    });
 
 
-  // Prepare data arrays for setting back to sheet
-  const quantityArray2D = activityObjectsArray.map(activity => [activity.quantity]);
-  const unitArray2D = activityObjectsArray.map(activity => [activity.unit]);
-  const rateArray2D = activityObjectsArray.map(activity => [activity.rate]);
-  const costArray2D = activityObjectsArray.map(activity => [activity.cost]);
+    // Prepare data arrays for setting back to sheet
+    const formulasArray2D = activityObjectsArray.map(activity => [
 
-  // Write values and formulas back to worksheet
-  sheet.getRange(`G${dataTopRow}:G${dataBottomRow}`).setValues(quantityArray2D);
-  sheet.getRange(`H${dataTopRow}:H${dataBottomRow}`).setValues(unitArray2D);
-  sheet.getRange(`I${dataTopRow}:I${dataBottomRow}`).setFormulas(rateArray2D);
-  sheet.getRange(`J${dataTopRow}:J${dataBottomRow}`).setFormulas(costArray2D);
+        activity.quantity, 
+        activity.unit, 
+        activity.rate, 
+        activity.cost
+
+    ]);
+
+    // Write values and formulas back to worksheet
+    sheet.getRange(`G${dataTopRow}:J${dataBottomRow}`).setFormulas(formulasArray2D as string[][]);
 }
 
 
