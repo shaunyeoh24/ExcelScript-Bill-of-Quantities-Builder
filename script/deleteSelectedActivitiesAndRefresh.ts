@@ -135,7 +135,7 @@ function updateActivityRowFormulas(
   // Exit early if no activity rows exist
   if (dataBottomRow === tableHeaderRow) {
     console.log("The table is empty!")
-    return
+    return [];
   }
 
   // Extract data range from columns B to J
@@ -194,29 +194,59 @@ function updateActivityRowFormulas(
 
     if (activity.hasChild) {
 
-      // Aggregate formula logic for parent items
-      activity.quantity = 1;
-      activity.unit = "LS";
+      const preserveQtyAndUnit: boolean =
+        activity.unit !== "LS" &&
+        activity.quantity !== 1 &&
+        activity.quantity !== "[qty]";
 
-      let costFormula = "=SUM(";
+      if (preserveQtyAndUnit) {
 
-      activityObjectsArray.forEach(item => {
-        if (
-          item.itemCode.startsWith(activity.itemCode + "-") &&
-          item.hierarchyLevel === activity.hierarchyLevel + 1
-        ) {
-          costFormula += `J${item.rowNumber},`;
-        }
-      });
+        // Keep original quantity and unit
+        let rateFormula = "=SUM(";
 
-      costFormula = costFormula.slice(0, -1) + ")";
+        // Iterate of child activities
+        activityObjectsArray.forEach(item => {
+          if (
+            item.itemCode.startsWith(activity.itemCode + "-") &&
+            item.hierarchyLevel === activity.hierarchyLevel + 1
+          ) {
+            rateFormula += `J${item.rowNumber},`;
+          }
+        });
 
-      activity.rate = "";
-      activity.cost = costFormula;
+        rateFormula = rateFormula.slice(0, -1) + ")";
+
+        activity.rate = rateFormula;
+        activity.cost = `=IFERROR(IF(G${activity.rowNumber}="-", "-", G${activity.rowNumber}*I${activity.rowNumber}), "[pending values]")`;
+
+      } else {
+
+        // Aggregate formula logic for parent items
+
+        activity.quantity = 1;
+        activity.unit = "LS";
+
+        let costFormula = "=SUM(";
+
+        activityObjectsArray.forEach(item => {
+          if (
+            item.itemCode.startsWith(activity.itemCode + "-") &&
+            item.hierarchyLevel === activity.hierarchyLevel + 1
+          ) {
+            costFormula += `J${item.rowNumber},`;
+          }
+        });
+
+        costFormula = costFormula.slice(0, -1) + ")";
+
+        activity.rate = "";
+        activity.cost = costFormula;
+
+      }
 
     } else {
 
-      // Assign placeholders or cost formula for leaf items
+      // Assign placeholders or cost formula for all leaf items
       activity.quantity = activity.quantity === "" ? "[qty]" : activity.quantity;
       activity.unit = activity.unit === "" ? "[unit]" : activity.unit;
       activity.rate = (activity.rate === "" || activity.rate === "#REF!") ? "[rate]" : activity.rate;
@@ -224,7 +254,6 @@ function updateActivityRowFormulas(
       activity.cost = `=IFERROR(IF(G${activity.rowNumber}="-", "-", G${activity.rowNumber}*I${activity.rowNumber}), "[pending values]")`;
     }
   });
-
 
   // Prepare data arrays for setting back to sheet
   const formulasArray2D = activityObjectsArray.map(activity => [
