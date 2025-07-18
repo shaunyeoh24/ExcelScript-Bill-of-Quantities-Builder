@@ -6,22 +6,22 @@ function main(workbook: ExcelScript.Workbook) {
     // 02 - Extract structured activity data and table bounds from worksheet
     const { activityObjectsArray, dataTopRow, dataBottomRow } = transformTableToActivityObjects(sheet, 9);
 
-    // 03 - Update quantity field with "[qty]" placeholder for all non-parent activities
+    // 03 - Update rates field with "[qty]" placeholder for all non-parent activities
     activityObjectsArray.forEach((activity) => {
         if (!activity.hasChild) {
-            activity.quantity = "[qty]";
+            activity.rate = "[rate]";
         }
     });
 
-    // 04 - Build 2D array of updated quantity values for column G
-    const activityQuantities = activityObjectsArray.map(obj => [obj.quantity]);
+    // 04 - Build 2D array of updated rates values for column I
+    const activityRates = activityObjectsArray.map(obj => [obj.rate]);
 
-    // 05 - Apply quantity updates to the worksheet (column G only)
-    const tableDataRange = sheet.getRange(`G${dataTopRow}:G${dataBottomRow}`);
-    tableDataRange.setFormulas(activityQuantities as string[][]);
+    // 05 - Apply rates updates to the worksheet (column I only)
+    const tableDataRange = sheet.getRange(`I${dataTopRow}:I${dataBottomRow}`);
+    tableDataRange.setFormulas(activityRates as string[][]);
 
     // 06 - Log completion status
-    console.log("Reset Quantities: Completed successfully.");
+    console.log("Reset Rates: Completed successfully.");
 }
 
 
@@ -43,7 +43,7 @@ function main(workbook: ExcelScript.Workbook) {
  *     rowNumber: number,
  *     itemCode: string,
  *     activityName: string,
- *     quantity: (number | string),
+ *     rates: (number | string),
  *     unit: string,
  *     rate: (number | string),
  *     cost: string,
