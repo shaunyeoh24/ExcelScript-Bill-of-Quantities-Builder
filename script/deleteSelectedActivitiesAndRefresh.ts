@@ -48,13 +48,16 @@ function deleteSelectedActivitiesAndRefresh(workbook: ExcelScript.Workbook) {
   const activeRangeTopRow = activeRange.getRowIndex() + 1;
   const activeRangeBottomRow = activeRangeTopRow + activeRange.getRowCount() - 1;
 
-  // 02 - Delete selected row(s)
+  // 02 - Validate deletion range
+  if (activeRangeTopRow < 9) throw new Error("Not within data range!")
+
+  // 03 - Delete selected row(s)
   sheet.getRange(`${activeRangeTopRow}:${activeRangeBottomRow}`).delete(ExcelScript.DeleteShiftDirection.up);
 
-  // 03 - Reindex and reset itemCodes
+  // 04 - Reindex and reset itemCodes
   refreshActivityItemCodes(workbook, 9);
 
-  // 04 - Update formulas for quantity, unit, rate, cost columns
+  // 05 - Update formulas for quantity, unit, rate, cost columns
   updateActivityRowFormulas(sheet, 9);
 
 }
