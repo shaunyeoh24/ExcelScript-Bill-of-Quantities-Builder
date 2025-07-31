@@ -48,8 +48,10 @@ function deleteSelectedActivitiesAndRefresh(workbook: ExcelScript.Workbook) {
   const activeRangeTopRow = activeRange.getRowIndex() + 1;
   const activeRangeBottomRow = activeRangeTopRow + activeRange.getRowCount() - 1;
 
+  const {dataTopRow, dataBottomRow} = transformTableToActivityObjects(sheet, 9);
+
   // 02 - Validate deletion range
-  if (activeRangeTopRow < 9) throw new Error("Not within data range!")
+  if (activeRangeTopRow < dataTopRow || activeRangeBottomRow > dataBottomRow) throw new Error("Selected row not deleted - row not within data range!")
 
   // 03 - Delete selected row(s)
   sheet.getRange(`${activeRangeTopRow}:${activeRangeBottomRow}`).delete(ExcelScript.DeleteShiftDirection.up);
