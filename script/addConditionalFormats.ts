@@ -1,3 +1,13 @@
+/// ===== MAIN FUNCTION ===== ///
+
+function main(workbook: ExcelScript.Workbook) {
+
+  applyConditionalFormatting(workbook);
+
+}
+
+/// ========================================== ///
+
 class ConditionalFormattingTheme {
 // This class encapsulates conditional formatting properties and allows them to be applied to a specified range.
 
@@ -24,25 +34,28 @@ class ConditionalFormattingTheme {
     cfProperties.getFormat().getFill().setColor(this.fillColor);
     cfProperties.getFormat().getFont().setColor(this.fontColor);
     cfProperties.getFormat().getFont().setBold(this.setBold);
+
   }
 }
 
-function main(workbook: ExcelScript.Workbook) {
+function applyConditionalFormatting(workbook: ExcelScript.Workbook) {
 
   const sheet = workbook.getActiveWorksheet();
 
   // 01 - Get data range
-  let {dataTopRow, dataBottomRow} = transformTableToActivityObjects(sheet, 9);
+  let { dataTopRow, dataBottomRow } = transformTableToActivityObjects(sheet, 9);
 
   const rangeAddress = `B${dataTopRow}:J${dataBottomRow}`
 
   const range = sheet.getRange(rangeAddress);
 
-  range.clearAllConditionalFormats();
+  if (range.getConditionalFormats().length > 0) {
+    range.clearAllConditionalFormats();
+  }
 
   // 02 - Define theme color conditional formatting (default blue)
   const themePalette: ConditionalFormattingTheme[] = [
-    
+
     new ConditionalFormattingTheme(
       "Level 0",
       "acb9ca",
@@ -61,7 +74,7 @@ function main(workbook: ExcelScript.Workbook) {
 
     new ConditionalFormattingTheme(
       "Level 2",
-      "f0f2f5",
+      "f1f3f6",
       "000000",
       false,
       (dataTopRow: number) => `=LEN($B${dataTopRow})-LEN(SUBSTITUTE($B${dataTopRow},"-","")) = 2`
@@ -94,7 +107,6 @@ function main(workbook: ExcelScript.Workbook) {
   lightenTextConditionalFormatting(workbook, dataTopRow, dataBottomRow)
 }
 
-
 /**
  * Applies conditional formatting to dim rows with no quantity data.
  * 
@@ -117,20 +129,17 @@ function lightenTextConditionalFormatting(
   // 01 - Define the target range: columns B to J for all relevant rows
   const range = sheet.getRange(`B${dataTopRow}:J${dataBottomRow}`);
 
-  // 02 - Remove existing conditional formats to avoid stacking
-  range.clearAllConditionalFormats();
-
-  // 03 - Create new custom conditional format object
+  // 02 - Create new custom conditional format object
   const lightenTextConditionalFormat = range
     .addConditionalFormat(ExcelScript.ConditionalFormatType.custom)
     .getCustom();
 
-  // 04 - Set formula: triggers if quantity in column G is 0, blank, or "-"
+  // 03 - Set formula: triggers if quantity in column G is 0, blank, or "-"
   lightenTextConditionalFormat.getRule().setFormula(
     `=OR($G${dataTopRow} = 0, $G${dataTopRow} = "", $G${dataTopRow} = "-")`
   );
 
-  // 05 - Set font color if condition is true
+  // 04 - Set font color if condition is true
   lightenTextConditionalFormat.getFormat().getFont().setColor(textColor);
 }
 
@@ -251,6 +260,8 @@ function transformTableToActivityObjects(
 
   return { activityObjectsArray, dataTopRow, dataBottomRow };
 }
+
+
 
 
 
